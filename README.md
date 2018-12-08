@@ -1,22 +1,8 @@
 apriltags_ros
 ===
-apriltags ros package for usb camera detection
+apriltags ros package for tag detection based on https://github.com/swatbotics/apriltags-cpp
 
 ubuntu16.04 ROS kinetic 
-
-Demo videos 1
-===
-aprilTag detection ros wrapper
-[![apriltags_detections](https://github.com/xenobot-dev/apriltags_ros/blob/master/software/apriltags_launch.png)](https://youtu.be/dY6OzeA6rb4)
-
-Demo videos 2
-===
-add aprilTag simulation 
-[![tb3_gazebo](https://github.com/YuehChuan/tb3_aprilTag/blob/master/misc/tb3_gazebo.png)](https://turtlebot3.readthedocs.io/en/latest/simulation.html)
-
-**Source**
-https://github.com/YuehChuan/tb3_aprilTag
-
 
 Installation
 ===
@@ -61,15 +47,17 @@ Usage
 ========
 Print out tag36h11.pdf  in apriltags_ros/software/  with your desire size.
 
-edit tag size in  apriltags_ros/apriltags_ws/src/launch/usb_cam_apriltags.launch
+edit tag deteails in the launch file
 
 For example The tag ID 1 inner width is 82mm  set 0.082m
 ```
    <rosparam param="tag_data">
       "1": 
-        size: 0.082  
+        size: 0.082
+        name:tag1
       "2":
         size: 0.048
+        name:tag2
     </rosparam>
  ```
 
