@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/forwards.h>
 #include <ros/single_subscriber_publisher.h>
+#include <tf/transform_broadcaster.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <visualization_msgs/Marker.h>
@@ -81,9 +82,21 @@ double GetTagSize(int tag_id)
     boost::unordered_map<size_t, double>::iterator tag_sizes_it =
         tag_sizes_.find(tag_id);
     if(tag_sizes_it != tag_sizes_.end()) {
-        return tag_sizes_it->second;
+	return tag_sizes_it->second;
     } else {
-        return default_tag_size_;
+	return default_tag_size_;	
+    }
+}
+
+std::string GetTagName(int tag_id)    //added by partha
+{
+    boost::unordered_map<size_t, std::string>::iterator tag_names_it =
+        tag_names_.find(tag_id);
+    if(tag_names_it != tag_names_.end()) {        
+	return tag_names_it->second;
+    } else {
+        std::cout<<"detected random tags"<<std::endl;
+        return "false tag";  // ==> fu**** up tag name
     }
 }
 
@@ -338,7 +351,7 @@ void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
         Eigen::Quaternion<double> q(R);
         
         double tag_size = GetTagSize(detections[i].id);
-        cout << tag_size << " " << detections[i].id << endl;
+        //cout << tag_size << " " << detections[i].id << endl;  // removed by partha (seems unnecessary)
         
         // Fill in MarkerArray msg
         visualization_msgs::Marker marker_transform;
@@ -379,7 +392,14 @@ void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
         marker_transform.color.b = 1.0;
         marker_transform.color.a = 1.0;
         marker_transforms.markers.push_back(marker_transform);
-        
+	//publish transform right away with this data     (added by partha)   
+	static tf::TransformBroadcaster tf_pub;	
+	tf::Transform transform;
+	transform.setOrigin( tf::Vector3(pose(0,3),pose(1,3), pose(2,3)) );
+	transform.setRotation(tf::Quaternion(q.x(),q.y(),q.z(),q.w()));
+	tf_pub.sendTransform(tf::StampedTransform(transform,msg->header.stamp,camera_frame,GetTagName(detections[i].id)));
+	//ROS_INFO("YOLO");
+
         // Fill in AprilTag detection.
         apriltags::AprilTagDetection apriltag_det;
         apriltag_det.header = marker_transform.header;
@@ -496,6 +516,7 @@ void GetParameterValues()
     node_->param("default_tag_size", default_tag_size_, DEFAULT_TAG_SIZE);
     node_->param("display_type", display_type_, DEFAULT_DISPLAY_TYPE);
     node_->param("marker_thickness", marker_thickness_, 0.01);
+    node_->param("camera_frame", camera_frame, DEFAULT_CAMERA_NAME);  //base frame for tf (added by partha)
 
     node_->param("viewer", viewer_, false);
     node_->param("publish_detections_image", publish_detections_image_, false);
@@ -525,6 +546,11 @@ void GetParameterValues()
             tag_sizes_[tag_id] = static_cast<double>(tag_values["size"]);
             ROS_DEBUG("Setting tag%d to size %f m.", tag_id, tag_sizes_[tag_id]);
         }
+	if (tag_values.hasMember("name")) //added by partha
+        {
+            tag_names_[tag_id] = static_cast<std::string>(tag_values["name"]);
+            //ROS_DEBUG("Setting tag%d to size %f m.", tag_id, tag_sizes_[tag_id]);
+        }
     }
 }
 
@@ -539,7 +565,7 @@ void SetupPublisher()
             disconnect_callback);
     apriltag_publisher_ = node_->advertise<apriltags::AprilTagDetections>(
             DEFAULT_DETECTIONS_TOPIC, 1, connect_callback, disconnect_callback);
-
+    //tf::TransformBroadcaster tf_pub;  //added by partha
     if(publish_detections_image_)
     {
         image_publisher_ = (*image_).advertise(DEFAULT_DETECTIONS_IMAGE_TOPIC, 1);

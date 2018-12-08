@@ -5,6 +5,7 @@ const double PAGE_TAG_SIZE = 0.165;
 const std::string DEFAULT_TAG_FAMILY = "Tag36h11";
 const std::string DEFAULT_IMAGE_TOPIC = "image";
 const std::string DEFAULT_CAMERA_INFO_TOPIC = "camera_info";
+const std::string DEFAULT_CAMERA_NAME = "cam0";
 const std::string DEFAULT_MARKER_TOPIC = "marker_array";
 const std::string DEFAULT_DETECTIONS_TOPIC = "detections";
 const std::string DEFAULT_DETECTIONS_IMAGE_TOPIC = "detections_image";
@@ -21,7 +22,7 @@ ros::Publisher apriltag_publisher_;
 image_transport::Publisher image_publisher_;
 ros::Subscriber info_subscriber;
 image_transport::Subscriber image_subscriber;
-
+//tf::TransformBroadcaster tf_pub;
 // AprilTag parts
 TagFamily* family_;
 TagDetector* detector_;
@@ -35,7 +36,9 @@ bool viewer_;
 bool publish_detections_image_;
 double default_tag_size_;
 double marker_thickness_;
+std::string camera_frame;  //parent frame to publish tf...  added by partha
 boost::unordered_map<size_t, double> tag_sizes_;
+boost::unordered_map<size_t, std::string> tag_names_;  //added by partha
 bool running_;
 bool has_camera_info_;
 std::string display_type_;
